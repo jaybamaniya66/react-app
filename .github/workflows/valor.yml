@@ -1,0 +1,44 @@
+name: Valor RUN (Scheduled by Environment)
+
+jobs:
+  run:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Log in to GitHub registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Set environment variables
+        run: |
+          if [[ "${{ matrix.environment }}" == "dev" ]]; then
+            echo "CONFIG_PATH=configs/dev.config.yaml" >> $GITHUB_ENV
+          else
+            echo "CONFIG_PATH=configs/prod.config.yaml" >> $GITHUB_ENV
+          fi
+
+      - name: Pull Docker image from GitHub Container Registry
+        run: |
+          docker pull ghcr.io/jaybamaniya66/react-app:latest || echo "Image not found!"
+
+      - name: Introduce Delay (Optional for Sequential Runs)
+        run: |
+          case "${{ matrix.environment }}" in
+            dev) sleep 0 ;;
+            prod) sleep 300 ;;  # 5 minutes delay
+          esac
+
+      - name: Verify the config
+        run: echo "CONFIG PATH is $CONFIG_PATH"
