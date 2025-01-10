@@ -1,5 +1,11 @@
 name: Valor RUN (Scheduled by Environment)
 
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
   run:
     runs-on: self-hosted
